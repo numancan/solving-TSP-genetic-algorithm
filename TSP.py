@@ -3,14 +3,14 @@ import random
 import math
 from visualize import plot
 
-MUTATION_RATE = 40
+MUTATION_RATE = 60
 MUTATION_REPEAT_COUNT = 2
 WEAKNESS_THRESHOLD = 850
 
 # Begin and end point is first city
-cityCoordinates = [[5, 53], [124, 31], [46, 54], [86, 148], [21, 8],
-                   [134, 72], [49, 126], [36, 34], [26, 49],
-                   [124, 122], [80, 92], [70, 69], [76, 133]]
+cityCoordinates = [[5, 80], [124, 31], [46, 54], [86, 148], [21, 8],
+                   [134, 72], [49, 126], [36, 34], [26, 49], [141, 6],
+                   [124, 122], [80, 92], [70, 69], [76, 133], [23, 65]]
 
 citySize = len(cityCoordinates)
 
@@ -161,4 +161,4 @@ def GeneticAlgorithm(popSize, maxGeneration):
 
 
 if __name__ == "__main__":
-    GeneticAlgorithm(popSize=100, maxGeneration=100)
+    GeneticAlgorithm(popSize=100, maxGeneration=300)
