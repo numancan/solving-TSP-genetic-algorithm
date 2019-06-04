@@ -8,7 +8,7 @@ MUTATION_REPEAT_COUNT = 2
 WEAKNESS_THRESHOLD = 850
 
 # Begin and end point is first city
-cityCoordinates = [[5, 53], [124, 31], [46, 53], [86, 148], [21, 8],
+cityCoordinates = [[5, 53], [124, 31], [46, 54], [86, 148], [21, 8],
                    [134, 72], [49, 126], [36, 34], [26, 49],
                    [124, 122], [80, 92], [70, 69], [76, 133]]
 
