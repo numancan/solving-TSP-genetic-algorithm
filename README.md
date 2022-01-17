@@ -3,7 +3,7 @@ The travelling salesman problem (TSP) asks the following question: "Given a list
 
 ### Result in 100 generation for 14 cities
 
-![](tsp-result.PNG)
+![](./.media/tsp-result.PNG)
 
 ## Getting Started
 
