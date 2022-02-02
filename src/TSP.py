@@ -1,164 +1,180 @@
-import numpy as np
+from matplotlib.offsetbox import AnchoredText
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+from typing import List
 import random
+import numpy
 import math
-from visualize import plot
 
-MUTATION_RATE = 60
-MUTATION_REPEAT_COUNT = 2
-WEAKNESS_THRESHOLD = 850
-
-# Begin and end point is first city
-cityCoordinates = [[5, 80], [124, 31], [46, 54], [86, 148], [21, 8],
+# Zeroth index is start and end point
+CITY_COORDINATES = [[5, 80], [124, 31], [46, 54], [86, 148], [21, 8],
                    [134, 72], [49, 126], [36, 34], [26, 49], [141, 6],
                    [124, 122], [80, 92], [70, 69], [76, 133], [23, 65]]
 
-citySize = len(cityCoordinates)
+TOTAL_CHROMOSOME = len(CITY_COORDINATES) - 1
 
+POPULATION_SIZE = 300 # Minumum population size 100
+MAX_GENERATION = 400
+MUTATION_RATE = 0.2
+WEAKNESS_THRESHOLD = 900
 
 class Genome():
-    chromosomes = []
-    fitness = 9999
+    def __init__(self):
+        self.chromosome = []
+        self.fitness = 0
 
+    def __str__(self):
+        return "Chromosome: {0} Fitness: {1}\n".format(self.chromosome, self.fitness) 
+    
+    def __repr__(self):
+        return str(self)
 
-def CreateNewPopulation(size):
-    population = []
-    for x in range(size):
-        newGenome = Genome()
-        newGenome.chromosomes = random.sample(range(1, citySize), citySize - 1)
-        newGenome.chromosomes.insert(0, 0)
-        newGenome.chromosomes.append(0)
-        newGenome.fitness = Evaluate(newGenome.chromosomes)
-        population.append(newGenome)
-    return population
+def create_genome() -> Genome:
+    genome = Genome()
+    
+    genome.chromosome = random.sample(range(1, TOTAL_CHROMOSOME + 1), TOTAL_CHROMOSOME)
+    genome.fitness = eval_chromosome(genome.chromosome)
+    return genome
 
-
-# Calculate distance between two point
-def distance(a, b):
+def distance(a, b) -> float:
     dis = math.sqrt(((a[0] - b[0])**2) + ((a[1] - b[1])**2))
-    return np.round(dis, 2)
+    return numpy.round(dis, 2)
 
+def get_fittest_genome(genomes: List[Genome]) -> Genome:
+    genome_fitness = [genome.fitness for genome in genomes]
+    return genomes[genome_fitness.index(min(genome_fitness))]
 
-def Evaluate(chromosomes):
-    calculatedFitness = 0
-    for i in range(len(chromosomes) - 1):
-        p1 = cityCoordinates[chromosomes[i]]
-        p2 = cityCoordinates[chromosomes[i + 1]]
-        calculatedFitness += distance(p1, p2)
-    calculatedFitness = np.round(calculatedFitness, 2)
-    return calculatedFitness
+def eval_chromosome(chromosome: List[int]) -> float:
+    # Add 0 to beginning and ending of chromosome
+    arr = [0] * (len(chromosome) + 2)
+    arr[1:-1] = chromosome
 
+    fitness = 0
+    for i in range(len(arr) - 1):
+        p1 = CITY_COORDINATES[arr[i]]
+        p2 = CITY_COORDINATES[arr[i + 1]]
+        fitness += distance(p1, p2)
+    return numpy.round(fitness, 2)
 
-def findBestGenome(population):
-    allFitness = [i.fitness for i in population]
-    bestFitness = min(allFitness)
-    return population[allFitness.index(bestFitness)]
+def tournament_selection(population:List[Genome], k:int) -> List[Genome]:
+    selected_genomes = random.sample(population, k)
+    selected_parent = get_fittest_genome(selected_genomes)
+    return selected_parent
 
+def order_crossover(parents: List[Genome]) -> Genome:
+    child_chro = [-1] * TOTAL_CHROMOSOME
 
-# In K-Way tournament selection, we select K individuals
-# from the population at random and select the best out
-# of these to become a parent. The same process is repeated
-# for selecting the next parent.
-def TournamentSelection(population, k):
-    selected = [population[random.randrange(0, len(population))] for i in range(k)]
-    bestGenome = findBestGenome(selected)
-    return bestGenome
+    subset_length = random.randrange(2, 5)
+    crossover_point = random.randrange(0, TOTAL_CHROMOSOME - subset_length)
 
+    child_chro[crossover_point:crossover_point+subset_length] = parents[0].chromosome[crossover_point:crossover_point+subset_length]
 
-def Reproduction(population):
-    parent1 = TournamentSelection(population, 10).chromosomes
-    parent2 = TournamentSelection(population, 6).chromosomes
-    while parent1 == parent2:
-        parent2 = TournamentSelection(population, 6).chromosomes
+    j, k = crossover_point + subset_length, crossover_point + subset_length
+    while -1 in child_chro:
+        if parents[1].chromosome[k] not in child_chro:
+            child_chro[j] = parents[1].chromosome[k]
+            j = j+1 if (j != TOTAL_CHROMOSOME-1) else 0
+        
+        k = k+1 if (k != TOTAL_CHROMOSOME-1) else 0
 
-    return OrderOneCrossover(parent1, parent2)
+    child = Genome()
+    child.chromosome = child_chro
+    child.fitness = eval_chromosome(child.chromosome)
+    return child
 
+def scramble_mutation(genome: Genome) -> Genome:
+    subset_length = random.randint(2, 6)
+    start_point = random.randint(0, TOTAL_CHROMOSOME - subset_length)
+    subset_index = [start_point, start_point + subset_length]
 
-# Sample:
-# parent1 = [0, 3, 8, 5, 1, 7, 12, 6, 4, 10, 11, 9, 2, 0]
-# parent2 = [0, 1, 6, 3, 5, 4, 10, 2, 7, 12, 11, 8, 9, 0]
-# child   = [0, 1, 3, 5, 2, 7, 12, 6, 4, 10, 11, 8, 9, 0]
-def OrderOneCrossover(parent1, parent2):
-    size = len(parent1)
-    child = [-1] * size
+    subset = genome.chromosome[subset_index[0]:subset_index[1]]
+    random.shuffle(subset)
 
-    child[0], child[size - 1] = 0, 0
+    genome.chromosome[subset_index[0]:subset_index[1]] = subset
+    genome.fitness = eval_chromosome(genome.chromosome)
+    return genome
 
-    point = random.randrange(5, size - 4)
+def reproduction(population: List[Genome]) -> Genome:
+    parents = [tournament_selection(population, 20), random.choice(population)] 
 
-    for i in range(point, point + 4):
-        child[i] = parent1[i]
-    point += 4
-    point2 = point
-    while child[point] in [-1, 0]:
-        if child[point] != 0:
-            if parent2[point2] not in child:
-                child[point] = parent2[point2]
-                point += 1
-                if point == size:
-                    point = 0
-            else:
-                point2 += 1
-                if point2 == size:
-                    point2 = 0
-        else:
-            point += 1
-            if point == size:
-                point = 0
+    child = order_crossover(parents)
+    
+    if random.random() < MUTATION_RATE:
+        scramble_mutation(child)
 
-    if random.randrange(0, 100) < MUTATION_RATE:
-        child = SwapMutation(child)
+    return child
 
-    # Create new genome for child
-    newGenome = Genome()
-    newGenome.chromosomes = child
-    newGenome.fitness = Evaluate(child)
-    return newGenome
+def visualize(all_fittest: List[Genome], all_pop_size: List[int]):
+    fig = plt.figure(tight_layout=True, figsize=(10, 6))
+    gs = gridspec.GridSpec(2, 1)
 
-# Sample:
-# Chromosomes =         [0, 3, 8, 5, 1, 7, 12, 6, 4, 10, 11, 9, 2, 0]
-# Mutated chromosomes = [0, 11, 8, 5, 1, 7, 12, 6, 4, 10, 3, 9, 2, 0]
+    # Top grid: Route
+    chromosome = [0] * (len(all_fittest[-1].chromosome) + 2)
+    chromosome[1:-1] = all_fittest[-1].chromosome
+    coordinates = [CITY_COORDINATES[i] for i in chromosome]
+    x, y = zip(*coordinates)
 
+    ax = fig.add_subplot(gs[0, :])
+    ax.plot(x, y, color="midnightblue")
+    ax.scatter(x, y, color="midnightblue")
 
-def SwapMutation(chromo):
-    for x in range(MUTATION_REPEAT_COUNT):
-        p1, p2 = [random.randrange(1, len(chromo) - 1) for i in range(2)]
-        while p1 == p2:
-            p2 = random.randrange(1, len(chromo) - 1)
-        log = chromo[p1]
-        chromo[p1] = chromo[p2]
-        chromo[p2] = log
-    return chromo
+    for i, xy in enumerate(coordinates[:-1]):
+        ax.annotate(i, xy, xytext=(-16, -4), textcoords="offset points", color="tab:red")
 
+    ax.set_title("Route")
+    ax.set_ylabel('Y')
+    ax.set_xlabel('X')
 
-def GeneticAlgorithm(popSize, maxGeneration):
-    allBestFitness = []
-    population = CreateNewPopulation(popSize)
-    generation = 0
-    while generation < maxGeneration:
-        generation += 1
+    # Bottom grid: Fitness & Populations
+    ax = fig.add_subplot(gs[1, :])
+    all_fitness = [genome.fitness for genome in all_fittest]
+    ax.plot(all_fitness, color="midnightblue")
 
-        for i in range(int(popSize / 2)):
-            # Select parent, make crossover and
-            # after, append in population a new child
-            population.append(Reproduction(population))
-
-        # Kill weakness person
-        for genom in population:
-            if genom.fitness > WEAKNESS_THRESHOLD:
-                population.remove(genom)
-
-        averageFitness = round(np.sum([genom.fitness for genom in population]) / len(population), 2)
-        bestGenome = findBestGenome(population)
-        print("\n" * 5)
-        print("Generation: {0}\nPopulation Size: {1}\t Average Fitness: {2}\nBest Fitness: {3}"
-              .format(generation, len(population), averageFitness,
-                      bestGenome.fitness))
-
-        allBestFitness.append(bestGenome.fitness)
-
-    # Visualize
-    plot(generation, allBestFitness, bestGenome, cityCoordinates)
-
+    color = 'tab:red'
+    ax2 = ax.twinx()
+    ax2.set_ylabel('Population size', color=color)
+    ax2.plot(all_pop_size, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    
+    at = AnchoredText(
+        "Best Fitness: {0}".format(all_fittest[-1].fitness), prop=dict(size=10), 
+        frameon=True, loc='upper left')
+    at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+    ax.add_artist(at)
+    
+    ax.set_title("Fitness & Population Size")
+    ax.set_ylabel("Fitness")
+    ax.set_xlabel("Generations")
+    
+    fig.align_labels()
+    plt.grid(True)
+    plt.show()
 
 if __name__ == "__main__":
-    GeneticAlgorithm(popSize=100, maxGeneration=300)
+    generation = 0
+
+    population = [create_genome() for x in range (POPULATION_SIZE)]
+
+    all_fittest = []
+    all_pop_size = []
+    
+    while generation != MAX_GENERATION:
+        generation += 1
+        print("Generation: {0} -- Population size: {1} -- Best Fitness: {2}"
+            .format(generation, len(population), get_fittest_genome(population).fitness))
+
+        childs = []
+        for x in range(int(POPULATION_SIZE * 0.2)):
+            child = reproduction(population)
+            childs.append(child)
+        population.extend(childs)
+
+        # Kill weakness genome
+        for genome in population:
+            if genome.fitness > WEAKNESS_THRESHOLD:
+                population.remove(genome)
+
+        all_fittest.append(get_fittest_genome(population))
+        all_pop_size.append(len(population))
+
+    visualize(all_fittest, all_pop_size)
