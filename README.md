@@ -6,7 +6,7 @@ The travelling salesman problem (TSP) is the challange of finding the shortest r
 ## Result of try to solve TSP using genetic algorithm
 I implemented genetic algorithm in Python and the result, as shown in the image below
 
-![](./.media/result.PNG)
+![](./result.png)
 
 ## Usage
 
