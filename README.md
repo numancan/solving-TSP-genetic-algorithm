@@ -1,20 +1,18 @@
-# Solving Travelling Salesman Problem (TSP) Using Genetic Algorithm
-The travelling salesman problem (TSP) asks the following question: "Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city and returns to the origin city? **[1]** I tried to implement genetic algorithm in Python to solving this problem.
+# Solving Travelling Salesman Problem (TSP) Using Genetic Algorithm 
 
-### Result in 100 generation for 14 cities
+## What is Travelling Salesman Problem (TSP)? 
+The travelling salesman problem (TSP) is the challange of finding the shortest route for a person to take given a list of specific destinations. I 
 
-![](./.media/tsp-result.PNG)
+## Result of try to solve TSP using genetic algorithm
+I implemented genetic algorithm in Python and the result, as shown in the image below
 
-## Getting Started
+![](./.media/result.PNG)
 
-### Dependencies
-This project requires the following dependencies:
-* [Python](https://www.python.org/downloads)(>= 3)
-* [NumPy](http://www.numpy.org)
-* [Matplotlib](https://matplotlib.org)
+## Usage
 
-### Usage
-Run **TSP.py**.
-
-## References
-**[1]** [Wikipedia](https://en.wikipedia.org/wiki/Travelling_salesman_problem)
+```
+pip3 install matplotlib
+pip3 install numpy
+git clone https://github.com/numancan/solving-TSP-genetic-algorithm.git
+python3 ./solving-TSP-genetic-algorithm/tsp.py
+```
